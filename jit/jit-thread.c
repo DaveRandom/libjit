@@ -104,17 +104,19 @@ void _jit_thread_init(void)
 	pthread_once(&once_control, init_pthread);
 #elif defined(JIT_THREADS_WIN32)
 	static LONG volatile once_control = 0;
-	switch(InterlockedExchange(&once_control, 1))
-	{
-	case 0:
-		init_win32_thread();
-		InterlockedExchange(&once_control, 2);
-		break;
-	case 1:
-		while(InterlockedCompareExchange(&once_control, 2, 2) != 2)
+	if (once_control < 2) {
+		switch(InterlockedExchange(&once_control, 1))
 		{
+		case 0:
+			init_win32_thread();
+			InterlockedExchange(&once_control, 2);
+			break;
+		case 1:
+			while(InterlockedCompareExchange(&once_control, 2, 2) != 2)
+			{
+			}
+			break;
 		}
-		break;
 	}
 #endif
 }
